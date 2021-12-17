@@ -10,7 +10,7 @@ The evaluation uses Version 0.0.1 of the [`dp_mobility_report`](https://github.c
 
 To reproduce the results, follow these instructions.
 
-Create a conda environment:
+Create a conda environment and install all necessary packages by running the following commands:
 
 ``` bash
 conda create --name eval_dpmr
