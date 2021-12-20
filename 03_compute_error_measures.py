@@ -43,12 +43,11 @@ for dataset_name in config.DATASET_NAMES:
         error_measures = pd.DataFrame()
         error_measures_avg = pd.DataFrame()
         error_measures_std = pd.DataFrame()
-        
+
         # get baseline report
         d = shelve.open(
             os.path.join(
-                ds_report_path,
-                "maxTrips_" + str(max(max_trips_array)) + "_eps_None",
+                ds_report_path, "maxTrips_" + str(max(max_trips_array)) + "_eps_None",
             )
         )
         report_true = d[str(0)]
@@ -100,14 +99,13 @@ for dataset_name in config.DATASET_NAMES:
                 pbar.update()
 
         error_measures.to_csv(
-            os.path.join(config.df_output_path, dataset_name + "_all_reps.csv"),
+            os.path.join(df_output_path, dataset_name + "_all_reps.csv"),
             index_label="stat",
         )
         error_measures_avg.to_csv(
-            os.path.join(config.df_output_path, dataset_name + "_mean.csv"),
+            os.path.join(df_output_path, dataset_name + "_mean.csv"),
             index_label="stat",
         )
         error_measures_std.to_csv(
-            os.path.join(config.df_output_path, dataset_name + "_std.csv"),
-            index_label="stat",
+            os.path.join(df_output_path, dataset_name + "_std.csv"), index_label="stat",
         )

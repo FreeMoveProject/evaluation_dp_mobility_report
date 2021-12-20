@@ -143,23 +143,52 @@ def compute_error_measures(
             round_res=True,
         )
     )
-    error_measures = dict(**error_measures, **rel_error_dict(report_true["missing_values"], report_estimate["missing_values"], round_res = True))
-    trips_over_time = report_true["trips_over_time_section"].data.merge(report_estimate["trips_over_time_section"].data,
-        how = "outer", on = "datetime", suffixes  = ("_true", "_estimate"))
-    trips_over_time.fillna(0, inplace = True)
-    #error_measures["trips_over_time_js"] = compute_JS(trips_over_time.trip_count_true, trips_over_time.trip_count_estimate)
-    error_measures["trips_over_time_mre"] = symmetric_mape(trips_over_time.trip_count_true, trips_over_time.trip_count_estimate)
-    error_measures["trips_over_time_quartiles"] = symmetric_mape(report_true["trips_over_time_section"].quartiles.apply(lambda x: x.toordinal()), report_estimate["trips_over_time_section"].quartiles.apply(lambda x: x.toordinal()))
+    error_measures = dict(
+        **error_measures,
+        **rel_error_dict(
+            report_true["missing_values"],
+            report_estimate["missing_values"],
+            round_res=True,
+        )
+    )
+    trips_over_time = report_true["trips_over_time_section"].data.merge(
+        report_estimate["trips_over_time_section"].data,
+        how="outer",
+        on="datetime",
+        suffixes=("_true", "_estimate"),
+    )
+    trips_over_time.fillna(0, inplace=True)
+    # error_measures["trips_over_time_js"] = compute_JS(trips_over_time.trip_count_true, trips_over_time.trip_count_estimate)
+    error_measures["trips_over_time_mre"] = symmetric_mape(
+        trips_over_time.trip_count_true, trips_over_time.trip_count_estimate
+    )
+    error_measures["trips_over_time_quartiles"] = symmetric_mape(
+        report_true["trips_over_time_section"].quartiles.apply(lambda x: x.toordinal()),
+        report_estimate["trips_over_time_section"].quartiles.apply(
+            lambda x: x.toordinal()
+        ),
+    )
 
-    trips_per_weekday = pd.concat([report_true["trips_per_weekday"], report_estimate["trips_per_weekday"]],
-        join = "outer", axis = 1)
-    trips_per_weekday.fillna(0, inplace = True)
-    error_measures["trips_per_weekday"] = symmetric_mape(trips_per_weekday.iloc[:,0], trips_per_weekday.iloc[:,1])
+    trips_per_weekday = pd.concat(
+        [report_true["trips_per_weekday"], report_estimate["trips_per_weekday"]],
+        join="outer",
+        axis=1,
+    )
+    trips_per_weekday.fillna(0, inplace=True)
+    error_measures["trips_per_weekday"] = symmetric_mape(
+        trips_per_weekday.iloc[:, 0], trips_per_weekday.iloc[:, 1]
+    )
 
-    trips_per_hour = report_true["trips_per_hour"].merge(report_estimate["trips_per_hour"],
-        how = "outer", on = ["hour", "time_category"], suffixes  = ("_true", "_estimate"))
-    trips_per_hour.fillna(0, inplace = True)
-    error_measures["trips_per_hour"] = symmetric_mape(trips_per_hour.count_true, trips_per_hour.count_estimate)
+    trips_per_hour = report_true["trips_per_hour"].merge(
+        report_estimate["trips_per_hour"],
+        how="outer",
+        on=["hour", "time_category"],
+        suffixes=("_true", "_estimate"),
+    )
+    trips_per_hour.fillna(0, inplace=True)
+    error_measures["trips_per_hour"] = symmetric_mape(
+        trips_per_hour.count_true, trips_per_hour.count_estimate
+    )
 
     ### place
     counts_per_tile = report_true["counts_per_tile_section"].data.merge(
@@ -309,35 +338,103 @@ def compute_error_measures(
     error_measures["rel_od_flows_all_flows"] = symmetric_mape(
         rel_true.to_numpy(), rel_estimate.to_numpy(), n_true_positive_zeros
     )
-    error_measures["travel_time_emd"] = wasserstein_distance1D(report_true["travel_time_section"].data, report_estimate["travel_time_section"].data)
-    error_measures["travel_time_outliers"] = rel_error(report_true["travel_time_section"].n_outliers, report_estimate["travel_time_section"].n_outliers)
-    error_measures["travel_time_quartiles"] = symmetric_mape(report_true["travel_time_section"].quartiles, report_estimate["travel_time_section"].quartiles)
-    error_measures["jump_length_emd"] = wasserstein_distance1D(report_true["jump_length_section"].data, report_estimate["jump_length_section"].data)
-    error_measures["jump_length_outliers"] = rel_error(report_true["jump_length_section"].n_outliers, report_estimate["jump_length_section"].n_outliers)
-    error_measures["jump_length_quartiles"] = symmetric_mape(report_true["jump_length_section"].quartiles, report_estimate["jump_length_section"].quartiles)
+    error_measures["travel_time_emd"] = wasserstein_distance1D(
+        report_true["travel_time_section"].data,
+        report_estimate["travel_time_section"].data,
+    )
+    error_measures["travel_time_outliers"] = rel_error(
+        report_true["travel_time_section"].n_outliers,
+        report_estimate["travel_time_section"].n_outliers,
+    )
+    error_measures["travel_time_quartiles"] = symmetric_mape(
+        report_true["travel_time_section"].quartiles,
+        report_estimate["travel_time_section"].quartiles,
+    )
+    error_measures["jump_length_emd"] = wasserstein_distance1D(
+        report_true["jump_length_section"].data,
+        report_estimate["jump_length_section"].data,
+    )
+    error_measures["jump_length_outliers"] = rel_error(
+        report_true["jump_length_section"].n_outliers,
+        report_estimate["jump_length_section"].n_outliers,
+    )
+    error_measures["jump_length_quartiles"] = symmetric_mape(
+        report_true["jump_length_section"].quartiles,
+        report_estimate["jump_length_section"].quartiles,
+    )
 
     ## user
-    if (report_estimate["traj_per_user_section"] is None):
+    if report_estimate["traj_per_user_section"] is None:
         error_measures["traj_per_user_quartiles"] = None
-        error_measures["traj_per_user_outliers"] = rel_error(report_true["traj_per_user_section"].n_outliers, 0)
+        error_measures["traj_per_user_outliers"] = rel_error(
+            report_true["traj_per_user_section"].n_outliers, 0
+        )
     else:
-        error_measures["traj_per_user_quartiles"] = symmetric_mape(report_true["traj_per_user_section"].quartiles, report_estimate["traj_per_user_section"].quartiles)
-        error_measures["traj_per_user_outliers"] = rel_error(report_true["traj_per_user_section"].n_outliers, report_estimate["traj_per_user_section"].n_outliers)
-    if (report_estimate["user_time_delta_section"] is None):
+        error_measures["traj_per_user_quartiles"] = symmetric_mape(
+            report_true["traj_per_user_section"].quartiles,
+            report_estimate["traj_per_user_section"].quartiles,
+        )
+        error_measures["traj_per_user_outliers"] = rel_error(
+            report_true["traj_per_user_section"].n_outliers,
+            report_estimate["traj_per_user_section"].n_outliers,
+        )
+    if report_estimate["user_time_delta_section"] is None:
         error_measures["user_time_delta_quartiles"] = None
-        error_measures["user_time_delta_outliers"] = rel_error(report_true["user_time_delta_section"].n_outliers, 0)
+        error_measures["user_time_delta_outliers"] = rel_error(
+            report_true["user_time_delta_section"].n_outliers, 0
+        )
     else:
-        error_measures["user_time_delta_quartiles"] = symmetric_mape((report_true["user_time_delta_section"].quartiles.apply(lambda x: x.total_seconds() / 3600)), report_estimate["user_time_delta_section"].quartiles.apply(lambda x: x.total_seconds() / 3600))
-        error_measures["user_time_delta_outliers"] = rel_error(report_true["user_time_delta_section"].n_outliers, report_estimate["user_time_delta_section"].n_outliers)
-    error_measures["radius_gyration_emd"] = wasserstein_distance1D(report_true["radius_gyration_section"].data, report_estimate["radius_gyration_section"].data)
-    loc_entropy_per_tile = pd.DataFrame(report_true["location_entropy_section"]).merge(report_estimate["location_entropy_section"],
-        how = "outer", on = "tile_id", suffixes  = ("_true", "_estimate"))
-    loc_entropy_per_tile.fillna(0, inplace = True)
-    error_measures["radius_gyration_quartiles"] = symmetric_mape(report_true["radius_gyration_section"].quartiles, report_estimate["radius_gyration_section"].quartiles)
-    error_measures["radius_gyration_outliers"] = rel_error(report_true["radius_gyration_section"].n_outliers, report_estimate["radius_gyration_section"].n_outliers)
-    error_measures["location_entropy_mre"] = symmetric_mape(loc_entropy_per_tile.location_entropy_true, loc_entropy_per_tile.location_entropy_estimate)
-    error_measures["user_tile_count_emd"] = wasserstein_distance1D(report_true["user_tile_count_section"].data, report_estimate["user_tile_count_section"].data)
-    error_measures["user_tile_count_quartiles"] = symmetric_mape(report_true["user_tile_count_section"].quartiles, report_estimate["user_tile_count_section"].quartiles)
-    error_measures["uncorrelated_entropy_emd"] = wasserstein_distance1D(report_true["uncorrelated_entropy_section"].data, report_estimate["uncorrelated_entropy_section"].data)
-    error_measures["uncorrelated_entropy_quartiles"] = symmetric_mape(report_true["uncorrelated_entropy_section"].quartiles, report_estimate["uncorrelated_entropy_section"].quartiles)
+        error_measures["user_time_delta_quartiles"] = symmetric_mape(
+            (
+                report_true["user_time_delta_section"].quartiles.apply(
+                    lambda x: x.total_seconds() / 3600
+                )
+            ),
+            report_estimate["user_time_delta_section"].quartiles.apply(
+                lambda x: x.total_seconds() / 3600
+            ),
+        )
+        error_measures["user_time_delta_outliers"] = rel_error(
+            report_true["user_time_delta_section"].n_outliers,
+            report_estimate["user_time_delta_section"].n_outliers,
+        )
+    error_measures["radius_gyration_emd"] = wasserstein_distance1D(
+        report_true["radius_gyration_section"].data,
+        report_estimate["radius_gyration_section"].data,
+    )
+    loc_entropy_per_tile = pd.DataFrame(report_true["location_entropy_section"]).merge(
+        report_estimate["location_entropy_section"],
+        how="outer",
+        on="tile_id",
+        suffixes=("_true", "_estimate"),
+    )
+    loc_entropy_per_tile.fillna(0, inplace=True)
+    error_measures["radius_gyration_quartiles"] = symmetric_mape(
+        report_true["radius_gyration_section"].quartiles,
+        report_estimate["radius_gyration_section"].quartiles,
+    )
+    error_measures["radius_gyration_outliers"] = rel_error(
+        report_true["radius_gyration_section"].n_outliers,
+        report_estimate["radius_gyration_section"].n_outliers,
+    )
+    error_measures["location_entropy_mre"] = symmetric_mape(
+        loc_entropy_per_tile.location_entropy_true,
+        loc_entropy_per_tile.location_entropy_estimate,
+    )
+    error_measures["user_tile_count_emd"] = wasserstein_distance1D(
+        report_true["user_tile_count_section"].data,
+        report_estimate["user_tile_count_section"].data,
+    )
+    error_measures["user_tile_count_quartiles"] = symmetric_mape(
+        report_true["user_tile_count_section"].quartiles,
+        report_estimate["user_tile_count_section"].quartiles,
+    )
+    error_measures["uncorrelated_entropy_emd"] = wasserstein_distance1D(
+        report_true["uncorrelated_entropy_section"].data,
+        report_estimate["uncorrelated_entropy_section"].data,
+    )
+    error_measures["uncorrelated_entropy_quartiles"] = symmetric_mape(
+        report_true["uncorrelated_entropy_section"].quartiles,
+        report_estimate["uncorrelated_entropy_section"].quartiles,
+    )
     return error_measures

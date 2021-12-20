@@ -30,44 +30,44 @@ if not os.path.exists(graphs_output_path):
 
 n_datasets = len(config.DATASET_NAMES) if len(config.DATASET_NAMES) <= 3 else 3
 
-if (config.GEOLIFE in config.DATASET_NAMES):
-    em_geolife = pd.read_csv(os.path.join(
-        tables_path, config.GEOLIFE , config.GEOLIFE + "_mean.csv"),
+if config.GEOLIFE in config.DATASET_NAMES:
+    em_geolife = pd.read_csv(
+        os.path.join(tables_path, config.GEOLIFE, config.GEOLIFE + "_mean.csv"),
         index_col="stat",
     )
-    em_geolife_std = pd.read_csv(os.path.join(
-        tables_path, config.GEOLIFE , config.GEOLIFE + "_std.csv"),
-        index_col="stat",
-    )
-    measures = em_geolife.index 
-else:
-    em_geolife = None
-    em_geolife_std = None
-
-if (config.MADRID in config.DATASET_NAMES):
-    em_madrid = pd.read_csv(os.path.join(
-        tables_path, config.MADRID, config.MADRID + "_mean.csv"),
-        index_col="stat",
-    )
-    em_madrid_std = pd.read_csv(os.path.join(
-        tables_path, config.MADRID, config.MADRID + "_std.csv"),
+    em_geolife_std = pd.read_csv(
+        os.path.join(tables_path, config.GEOLIFE, config.GEOLIFE + "_std.csv"),
         index_col="stat",
     )
     measures = em_geolife.index
 else:
+    em_geolife = None
+    em_geolife_std = None
+
+if config.MADRID in config.DATASET_NAMES:
+    em_madrid = pd.read_csv(
+        os.path.join(tables_path, config.MADRID, config.MADRID + "_mean.csv"),
+        index_col="stat",
+    )
+    em_madrid_std = pd.read_csv(
+        os.path.join(tables_path, config.MADRID, config.MADRID + "_std.csv"),
+        index_col="stat",
+    )
+    measures = em_madrid.index
+else:
     em_madrid = None
     em_madrid_std = None
 
-if (config.BERLIN in config.DATASET_NAMES):
-    em_berlin = pd.read_csv(os.path.join(
-        tables_path, config.BERLIN, config.BERLIN + "_mean.csv"),
+if config.BERLIN in config.DATASET_NAMES:
+    em_berlin = pd.read_csv(
+        os.path.join(tables_path, config.BERLIN, config.BERLIN + "_mean.csv"),
         index_col="stat",
     )
-    em_berlin_std = pd.read_csv(os.path.join(
-        tables_path, config.BERLIN, config.BERLIN +  "_std.csv"),
+    em_berlin_std = pd.read_csv(
+        os.path.join(tables_path, config.BERLIN, config.BERLIN + "_std.csv"),
         index_col="stat",
     )
-    measures = em_geolife.index 
+    measures = em_berlin.index
 else:
     em_berlin = None
     em_berlin_std = None
@@ -85,6 +85,7 @@ def eps_from_key(key):
 #############################################
 # Tables and Plots
 #############################################
+
 
 def df_for_single_dataset(df, measure):
     selection = df.loc[[measure],].T
@@ -129,15 +130,7 @@ def create_subplot(axis, df, df_error, title, y_lim_max, legend=True):
 
 
 def plot_all_datasets(
-    d1,
-    d2,
-    d3,
-    d1_error,
-    d2_error,
-    d3_error,
-    measure,
-    y_lim_max=None,
-    sharey=False,
+    d1, d2, d3, d1_error, d2_error, d3_error, measure, y_lim_max=None, sharey=False,
 ):
     fig, axes = plt.subplots(1, n_datasets, figsize=(7, 2), sharey=sharey)
     n_axis = 0
@@ -146,28 +139,26 @@ def plot_all_datasets(
     else:
         ax = axes[n_axis]
 
-    if (d1 is not None):
+    if d1 is not None:
         df1 = df_for_single_dataset(d1, measure)
         df1_error = df_for_single_dataset(d1_error, measure)
-        ax = create_subplot(
-            ax, df1, df1_error, "GEOLIFE", y_lim_max, legend=False
-        )
+        ax = create_subplot(ax, df1, df1_error, "GEOLIFE", y_lim_max, legend=False)
         n_axis += 1
         if n_axis < n_datasets:
             ax = axes[n_axis]
 
-    if (d2 is not None):
+    if d2 is not None:
         df2 = df_for_single_dataset(d2, measure)
         df2_error = df_for_single_dataset(d2_error, measure)
         ax = create_subplot(ax, df2, df2_error, "MADRID", y_lim_max, legend=True)
         n_axis += 1
         if n_axis < n_datasets:
             ax = axes[n_axis]
-    if (d3 is not None):
+    if d3 is not None:
         df3 = df_for_single_dataset(d3, measure)
         df3_error = df_for_single_dataset(d3_error, measure)
         ax = create_subplot(ax, df3, df3_error, "BERLIN", y_lim_max, legend=False)
-    fig.suptitle(measure, y = 1.2)
+    fig.suptitle(measure, y=1.2)
     pp.savefig()
     plt.close()
 
@@ -182,7 +173,7 @@ for measure in measures:
         em_geolife_std,
         em_madrid_std,
         em_berlin_std,
-        measure
+        measure,
     )
-  
+
 pp.close()

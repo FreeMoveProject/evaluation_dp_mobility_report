@@ -25,29 +25,34 @@ if not os.path.exists(raw_data_path):
     os.makedirs(raw_data_path)
 if not os.path.exists(preprocessed_data_path):
     os.makedirs(preprocessed_data_path)
-############ Download data ###############
-with tqdm(total=2, desc="Download data",) as pbar:  # progress bar
-    # GEOLIFE
-    if config.GEOLIFE not in config.DATASET_NAMES:
-        print("Geolife not selected in config. Download is skipped.")
 
-    elif not os.path.exists(os.path.join(raw_data_path, config.GEOLIFE)):
+
+############ Download data ###############
+# GEOLIFE
+if config.GEOLIFE not in config.DATASET_NAMES:
+    print("Geolife not selected in config. Download is skipped.")
+
+elif not os.path.exists(os.path.join(raw_data_path, config.GEOLIFE)):
+    with tqdm(total=1, desc="Download geolife data",) as pbar:  # progress bar
+
         os.makedirs(os.path.join(raw_data_path, config.GEOLIFE))
 
         url = "https://download.microsoft.com/download/F/4/8/F4894AA5-FDBC-481E-9285-D5F8C4C4F039/Geolife%20Trajectories%201.3.zip"
         with urlopen(url) as zipresp:
             with ZipFile(BytesIO(zipresp.read())) as zfile:
                 zfile.extractall(
-                    os.path.join(raw_data_path, config.GEOLIFE, "Data_test")
+                    os.path.join(raw_data_path, config.GEOLIFE)
                 )
-    else:
-        print("Geolife data already exists. Download is skipped.")
-    pbar.update()
+        pbar.update()
+else:
+    print("Geolife data already exists. Download is skipped.")
 
-    # MADRID
-    if config.MADRID not in config.DATASET_NAMES:
-        print("Madrid not selected in config. Download is skipped.")
-    elif not os.path.exists(os.path.join(raw_data_path, config.MADRID)):
+# MADRID
+if config.MADRID not in config.DATASET_NAMES:
+    print("Madrid not selected in config. Download is skipped.")
+elif not os.path.exists(os.path.join(raw_data_path, config.MADRID)):
+    with tqdm(total=3, desc="Download madrid data",) as pbar:  # progress bar
+
         os.makedirs(os.path.join(raw_data_path, config.MADRID))
 
         # INDIVIDUOS
@@ -58,13 +63,17 @@ with tqdm(total=2, desc="Download data",) as pbar:  # progress bar
         )
         output.write(r.content)
         output.close()
+        pbar.update()
 
         # VIAJES
         url = "https://crtm.maps.arcgis.com/sharing/rest/content/items/6afd4db8175d4902ada0803f08ccf50e/data"
         r = requests.get(url, allow_redirects=True)
-        output = open(os.path.join(raw_data_path, "madrid/EDM2018VIAJES.xlsx"), "wb")
+        output = open(
+            os.path.join(raw_data_path, "madrid/EDM2018VIAJES.xlsx"), "wb"
+        )
         output.write(r.content)
         output.close()
+        pbar.update()
 
         url = "https://opendata.arcgis.com/api/v3/datasets/97f83bab03664d4e9853acf0e431d893_0/downloads/data?format=shp&spatialRefId=3857"
 
@@ -73,45 +82,46 @@ with tqdm(total=2, desc="Download data",) as pbar:  # progress bar
                 zfile.extractall(
                     os.path.join(raw_data_path, "madrid/ZonificacionZT1259-shp")
                 )
-    else:
-        print("Madrid data already exists. Download is skipped.")
-    pbar.update()
+        pbar.update()
+else:
+    print("Madrid data already exists. Download is skipped.")
 
-    ########### Preprocess Geolife data ###############
+########### Preprocess Geolife data ###############
 
-    # clean header of plt files and write all data into single csv
-    def geolife_clean_plt(root, user_id, input_filepath, traj_id):
-        # read plt file
-        with open(root + "/" + user_id + "/Trajectory/" + input_filepath, "rt") as fin:
-            cr = csv.reader(fin)
-            filecontents = [line for line in cr][6:]
-            for l in filecontents:
-                l.insert(0, traj_id)
-                l.insert(0, user_id)
-        return [
-            filecontents[0],
-            filecontents[-1],
-        ]  # only return first and last item (start and end)
-        # return filecontents
+# clean header of plt files and write all data into single csv
+def geolife_clean_plt(root, user_id, input_filepath, traj_id):
+    # read plt file
+    with open(root + "/" + user_id + "/Trajectory/" + input_filepath, "rt") as fin:
+        cr = csv.reader(fin)
+        filecontents = [line for line in cr][6:]
+        for l in filecontents:
+            l.insert(0, traj_id)
+            l.insert(0, user_id)
+    return [
+        filecontents[0],
+        filecontents[-1],
+    ]  # only return first and last item (start and end)
+    # return filecontents
 
-    def geolife_data_to_df(dir):
-        data = []
-        col_names = ["uid", "tid", "lat", "lng", "-", "Alt", "dayNo", "date", "time"]
-        user_id_dirs = [
-            name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))
-        ]
-        for user_id in np.sort(user_id_dirs):
-            tempdirs = os.listdir(dir + "/" + user_id + "/Trajectory")
-            subdirs = []
-            for item in tempdirs:
-                if not item.endswith(".DS_Store"):
-                    subdirs.append(item)
-            traj_id = 0
-            for subdir in subdirs:
-                data += geolife_clean_plt(dir, user_id, subdir, traj_id)
-                traj_id = traj_id + 1
-            pbar.update()
-        return pd.DataFrame(data, columns=col_names)
+
+def geolife_data_to_df(dir):
+    data = []
+    col_names = ["uid", "tid", "lat", "lng", "-", "Alt", "dayNo", "date", "time"]
+    user_id_dirs = [
+        name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))
+    ]
+    for user_id in np.sort(user_id_dirs):
+        tempdirs = os.listdir(dir + "/" + user_id + "/Trajectory")
+        subdirs = []
+        for item in tempdirs:
+            if not item.endswith(".DS_Store"):
+                subdirs.append(item)
+        traj_id = 0
+        for subdir in subdirs:
+            data += geolife_clean_plt(dir, user_id, subdir, traj_id)
+            traj_id = traj_id + 1
+        pbar.update()
+    return pd.DataFrame(data, columns=col_names)
 
 
 ## script ##
@@ -120,11 +130,11 @@ if config.GEOLIFE not in config.DATASET_NAMES:
     print("Geolife not selected in config. Preprocessing is skipped.")
 
 else:
-    with tqdm(total=184, desc="Preprocess Geolife data",) as pbar:  # progress bar
 
-        if Path(os.path.join(preprocessed_data_path, "geolife.csv")).exists():
-            print("Geolife data is already preprocessed. Processing is skipped.")
-        else:
+    if Path(os.path.join(preprocessed_data_path, "geolife.csv")).exists():
+        print("Geolife data is already preprocessed. Processing is skipped.")
+    else:
+        with tqdm(total=184, desc="Preprocess Geolife data",) as pbar:  # progress bar
             geolife_dir = os.path.join(
                 raw_data_path, config.GEOLIFE, "Geolife Trajectories 1.3", "Data"
             )
@@ -151,7 +161,7 @@ else:
             ### create tessellation
             # set boundaries of tessellation
             polygon_geom = Polygon(
-                zip([116.08, 116.82, 116.82, 116.08], [39.66, 39.66, 40.27, 40.27])
+                zip([116.08, 116.69, 116.69, 116.08], [39.66, 39.66, 40.27, 40.27])
             )
             base_shape = gpd.GeoDataFrame(index=[0], crs=4326, geometry=[polygon_geom])
             tessellation = tilers.tiler.get(
@@ -247,6 +257,7 @@ else:
             tessellation[["tile_id", "lat", "lng"]],
             left_on="tile_id",
             right_on="tile_id",
+            how="left",
         )
         df.to_csv(os.path.join(preprocessed_data_path, "madrid.csv"), index=False)
 
@@ -255,7 +266,7 @@ else:
             os.path.join(preprocessed_data_path, "madrid_tessellation.gpkg"),
             driver="GPKG",
         )
-    pbar.update()
+        pbar.update()
 
 
 ###### Preprocess Berlin Data ######
@@ -266,12 +277,17 @@ elif Path(os.path.join(preprocessed_data_path, config.BERLIN + ".csv")).exists()
     print("Berlin data is already preprocessed. Processing is skipped.")
 else:
     with tqdm(total=1, desc="Preprocess Berlin data",) as pbar:  # progress bar
+
         df = pd.read_csv(
-            os.path.join(raw_data_path, config.BERLIN, "berlin_full_data.csv"),
+            os.path.join(raw_data_path, config.BERLIN, "berlin_raw.csv"),
             delimiter=";",
-            skiprows=lambda i: i > 0 and random.random() > 0.1,
-        )  # sample of 10%
+        )  
+        # sample of 10%
+        uids = df.p_id.unique()
+        sample_10_perc = np.random.choice(uids, size = int(0.1*len(uids)), replace = False)
+        df = df[df.p_id.isin(sample_10_perc)]
         df["tid"] = range(0, len(df))
+
 
         starts = df.loc[
             :, ["p_id", "tid", "lon_start", "lat_start", "start_time_min", "name_mct"]
@@ -303,7 +319,7 @@ else:
             (pd.Timestamp("2018-04-19").timestamp() + df["datetime"] * 60), unit="s"
         )
 
-        tessellation = gpd.read_file(raw_data_path + "verkehrszellen_berlin.geojson")
+        tessellation = gpd.read_file(os.path.join(raw_data_path, config.BERLIN, "verkehrszellen_berlin.geojson"))
         tessellation.rename(
             columns={"vz_vbz_typ": "tile_id", "name": "tile_name"}, inplace=True
         )
@@ -312,4 +328,4 @@ else:
         )
 
         df.to_csv(preprocessed_data_path + config.BERLIN + ".csv", index=False)
-    pbar.update()
+        pbar.update()

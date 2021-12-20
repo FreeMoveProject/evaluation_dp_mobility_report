@@ -22,55 +22,55 @@ plt.rc("axes", prop_cycle=color_cycler)
 
 ##### Settings #####
 
-if ((config.GEOLIFE not in config.DATASET_NAMES) |
-    (config.MADRID not in config.DATASET_NAMES) |
-    (config.BERLIN not in config.DATASET_NAMES)):
-    print("Not all three data sets used in publication are present. Plots for publication will therefore be skipped.")
+if (
+    (config.GEOLIFE not in config.DATASET_NAMES)
+    | (config.MADRID not in config.DATASET_NAMES)
+    | (config.BERLIN not in config.DATASET_NAMES)
+):
+    print(
+        "Not all three data sets used in publication are present. Plots for publication will therefore be skipped."
+    )
 
 else:
     tables_path = os.path.join(config.OUTPUT_PATH, "tables")
     graphs_output_path = os.path.join(config.OUTPUT_PATH, "graphs")
 
-
     if not os.path.exists(graphs_output_path):
         os.makedirs(graphs_output_path)
 
     ##### Data #####
-    um_geolife = pd.read_csv(os.path.join(
-        tables_path, config.GEOLIFE , config.GEOLIFE + "_mean.csv"),
+    um_geolife = pd.read_csv(
+        os.path.join(tables_path, config.GEOLIFE, config.GEOLIFE + "_mean.csv"),
         index_col="stat",
     )
-    um_geolife_std = pd.read_csv(os.path.join(
-        tables_path, config.GEOLIFE , config.GEOLIFE + "_std.csv"),
+    um_geolife_std = pd.read_csv(
+        os.path.join(tables_path, config.GEOLIFE, config.GEOLIFE + "_std.csv"),
         index_col="stat",
     )
-    um_madrid = pd.read_csv(os.path.join(
-        tables_path, config.MADRID, config.MADRID + "_mean.csv"),
+    um_madrid = pd.read_csv(
+        os.path.join(tables_path, config.MADRID, config.MADRID + "_mean.csv"),
         index_col="stat",
     )
-    um_madrid_std = pd.read_csv(os.path.join(
-        tables_path, config.MADRID, config.MADRID + "_std.csv"),
+    um_madrid_std = pd.read_csv(
+        os.path.join(tables_path, config.MADRID, config.MADRID + "_std.csv"),
         index_col="stat",
     )
-    um_tapas = pd.read_csv(os.path.join(
-        tables_path, config.BERLIN, config.BERLIN + "_mean.csv"),
+    um_tapas = pd.read_csv(
+        os.path.join(tables_path, config.BERLIN, config.BERLIN + "_mean.csv"),
         index_col="stat",
     )
-    um_tapas_std = pd.read_csv(os.path.join(
-        tables_path, config.BERLIN, config.BERLIN +  "_std.csv"),
+    um_tapas_std = pd.read_csv(
+        os.path.join(tables_path, config.BERLIN, config.BERLIN + "_std.csv"),
         index_col="stat",
     )
-
 
     #### helper functions ###
     def max_trips_from_key(key):
         return key.split("mt_")[1].split("_e")[0]
 
-
     def eps_from_key(key):
         e = key.split("_e_")[1]
         return "999" if (e == "None") else e
-
 
     #############################################
     # Tables and Plots
@@ -104,7 +104,10 @@ else:
             "radius_gyration_quartiles",
         ]
     ]
-    multi_columns = [np.array(["MADRID", "MADRID"]), np.array(["user-level", "item-level"])]
+    multi_columns = [
+        np.array(["MADRID", "MADRID"]),
+        np.array(["user-level", "item-level"]),
+    ]
     d2.columns = multi_columns
 
     d3 = um_tapas[["mt_16_e_1", "mt_event_level_e_1"]]
@@ -117,7 +120,10 @@ else:
             "radius_gyration_quartiles",
         ]
     ]
-    multi_columns = [np.array(["BERLIN", "BERLIN"]), np.array(["user-level", "item-level"])]
+    multi_columns = [
+        np.array(["BERLIN", "BERLIN"]),
+        np.array(["user-level", "item-level"]),
+    ]
     d3.columns = multi_columns
 
     table = pd.concat([d1, d2, d3], axis=1)
@@ -134,7 +140,6 @@ else:
     table.index.name = "error measure"
     print(table.to_latex())
 
-
     def df_for_single_dataset(df, metric):
         selection = df.loc[[metric],].T
         selection["pb"] = selection.index.to_series().apply(eps_from_key)
@@ -148,7 +153,6 @@ else:
         selection.sort_index(axis=1, inplace=True)
         selection.set_axis(selection.columns.astype(str), axis=1, inplace=True)
         return selection.T
-
 
     def create_subplot(axis, df, df_error, title, y_lim_max, legend=True):
         for c in df.columns:
@@ -176,7 +180,6 @@ else:
         axis.set_title(title)
         return axis
 
-
     def plot_all_datasets(
         d1,
         d2,
@@ -199,12 +202,15 @@ else:
         axes[0] = create_subplot(
             axes[0], df1, df1_error, "GEOLIFE", y_lim_max, legend=False
         )
-        axes[1] = create_subplot(axes[1], df2, df2_error, "MADRID", y_lim_max, legend=True)
-        axes[2] = create_subplot(axes[2], df3, df3_error, "BERLIN", y_lim_max, legend=False)
-        #tikzplotlib.save(graphs_output_path + file_name + ".tex")
+        axes[1] = create_subplot(
+            axes[1], df2, df2_error, "MADRID", y_lim_max, legend=True
+        )
+        axes[2] = create_subplot(
+            axes[2], df3, df3_error, "BERLIN", y_lim_max, legend=False
+        )
+        # tikzplotlib.save(graphs_output_path + file_name + ".tex")
         pp.savefig()
         plt.close()
-
 
     pp = PdfPages(os.path.join(graphs_output_path, "graphs_for_publication.pdf"))
 
@@ -251,6 +257,6 @@ else:
         "smape_od_flows",
         y_lim_max=2,
         sharey=True,
-    )  
+    )
 
     pp.close()
