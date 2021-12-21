@@ -196,8 +196,8 @@ def madrid_preprocess_to_csv(dir):
 
     ind["date_arrival"] = ind.ref_date
 
-    ind.loc[ind.VDESHORAFIN.astype(int) >= 2400, "ref_date"] = ind.loc[
-        ind.VDESHORAFIN.astype(int) >= 2400, "ref_date"
+    ind.loc[ind.VDESHORAFIN.astype(int) >= 2400, "date_arrival"] = ind.loc[
+        ind.VDESHORAFIN.astype(int) >= 2400, "date_arrival"
     ] + timedelta(days=1)
     ind.loc[ind.VDESHORAFIN.astype(int) >= 2400, "VDESHORAFIN"] = (
         ind.loc[ind.VDESHORAFIN.astype(int) >= 2400, "VDESHORAFIN"].astype(int) - 2400
