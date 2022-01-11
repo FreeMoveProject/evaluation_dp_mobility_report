@@ -402,13 +402,6 @@ def compute_error_measures(
         report_true["radius_gyration_section"].data,
         report_estimate["radius_gyration_section"].data,
     )
-    loc_entropy_per_tile = pd.DataFrame(report_true["location_entropy_section"]).merge(
-        report_estimate["location_entropy_section"],
-        how="outer",
-        on="tile_id",
-        suffixes=("_true", "_estimate"),
-    )
-    loc_entropy_per_tile.fillna(0, inplace=True)
     error_measures["radius_gyration_quartiles"] = symmetric_mape(
         report_true["radius_gyration_section"].quartiles,
         report_estimate["radius_gyration_section"].quartiles,
@@ -417,6 +410,13 @@ def compute_error_measures(
         report_true["radius_gyration_section"].n_outliers,
         report_estimate["radius_gyration_section"].n_outliers,
     )
+    loc_entropy_per_tile = pd.DataFrame(report_true["location_entropy_section"]).merge(
+        report_estimate["location_entropy_section"],
+        how="outer",
+        on="tile_id",
+        suffixes=("_true", "_estimate"),
+    )
+    loc_entropy_per_tile.fillna(0, inplace=True)
     error_measures["location_entropy_mre"] = symmetric_mape(
         loc_entropy_per_tile.location_entropy_true,
         loc_entropy_per_tile.location_entropy_estimate,
