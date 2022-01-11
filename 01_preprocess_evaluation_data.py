@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-import random
 import csv
 from datetime import datetime, timedelta
 import numpy as np
@@ -14,6 +13,7 @@ from io import BytesIO
 from zipfile import ZipFile
 from urllib.request import urlopen
 from tqdm.auto import tqdm
+from shapely.geometry import Point
 
 
 import config
@@ -328,4 +328,22 @@ else:
         )
 
         df.to_csv(preprocessed_data_path + config.BERLIN + ".csv", index=False)
+
+                
+        ## add tile ID
+        def assign_points_to_tessellation(df, tessellation):
+            gdf = gpd.GeoDataFrame(
+                df, geometry=[Point(xy) for xy in zip(df.lng, df.lat)], crs="EPSG:4326"
+            )
+
+            # this take some time
+            df = gpd.sjoin(
+                tessellation[["tile_id", "tile_name", "geometry"]], gdf, how="right"
+            )  # Spatial join Points to polygons
+            df.drop(["index_left", "geometry"], axis=1, inplace=True)
+            return pd.DataFrame(df)
+
+        df = assign_points_to_tessellation(df, tessellation)
+        df.to_csv(preprocessed_data_path + config.BERLIN + "_w_tile_id.csv", index=False)
+        
         pbar.update()
