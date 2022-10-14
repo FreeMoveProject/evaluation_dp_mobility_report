@@ -8,7 +8,7 @@ import numpy as np
 import geopandas as gpd
 
 import config
-from dp_mobility_report import md_report
+from dp_mobility_report import DpMobilityReport
 from dp_mobility_report.model import preprocessing
 
 
@@ -43,32 +43,32 @@ for dataset_name in config.DATASET_NAMES:
     # assign tile ids beforehand so it does not have to be repeated for every run
     if "tile_name" not in tessellation.columns:
         tessellation["tile_name"] = tessellation.tile_id
-    if "tile_id" not in df.columns:
-        df = preprocessing.assign_points_to_tessellation(df, tessellation)
+    #if "tile_id" not in df.columns:
+     #   df = preprocessing.assign_points_to_tessellation(df, tessellation)
     ds_report_path = os.path.join(config.REPORT_PATH, dataset_name)
     if not os.path.exists(ds_report_path):
         os.makedirs(ds_report_path)
 
     # Settings
-    privacy_budgets = [None, 0.01, 0.1, 1, 10, 100]
+    privacy_budgets = [None, 1]#, 10, 100]
     trip_counts = df.groupby("uid").nunique().tid
     max_trips_array = list(
         set(
             [
-                1,
-                round(trip_counts.quantile(0.1)),
+                #1,
+                #round(trip_counts.quantile(0.1)),
                 round(trip_counts.quantile(0.25)),
-                round(trip_counts.quantile(0.5)),
-                round(trip_counts.quantile(0.75)),
-                round(trip_counts.quantile(0.90)),
-                round(trip_counts.max()),
-                -99,
+                #round(trip_counts.quantile(0.5)),
+                #round(trip_counts.quantile(0.75)),
+                #round(trip_counts.quantile(0.90)),
+                #round(trip_counts.max()),
+                #-99,
             ]
         )
     )  # event level
     max_trips_array = np.sort(max_trips_array)
     reps = 10
-
+    
     # compute reports
     d = shelve.open(os.path.join(ds_report_path, "config"))
     d["max_trips"] = max_trips_array
@@ -81,6 +81,8 @@ for dataset_name in config.DATASET_NAMES:
     ) as pbar:  # progress bar
 
         for max_trips in max_trips_array:
+            print(max_trips)
+            print(type(max_trips))
             if max_trips == -99:
                 user_privacy = False
                 max_trips = "event_level"
@@ -94,7 +96,7 @@ for dataset_name in config.DATASET_NAMES:
                     os.remove(shelve_path + ".db")
                 d = shelve.open(shelve_path)
                 for i in range(0, reps):
-                    d[str(i)] = md_report.MobilityDataReport(
+                    d[str(i)] = DpMobilityReport(
                         df,
                         tessellation,
                         privacy_budget=pb,
@@ -104,7 +106,7 @@ for dataset_name in config.DATASET_NAMES:
                             "od_analysis",
                             "user_analysis",
                         ],
-                        max_trips_per_user=max_trips,
+                        max_trips_per_user=int(max_trips),
                         evalu=True,
                         user_privacy=user_privacy,
                         disable_progress_bar=True,

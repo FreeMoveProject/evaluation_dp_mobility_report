@@ -57,8 +57,8 @@ def rel_error(true, estimate):
 
 def rel_error_dict(true_dict, estimate_dict, round_res=False):
     re = dict()
-    for key in true_dict:
-        re[key] = rel_error(true_dict[key], estimate_dict[key])
+    for key in true_dict.data:
+        re[key] = rel_error(true_dict.data[key], estimate_dict.data[key])
         if round_res:
             re[key] = round(re[key], 2)
     return re
@@ -151,8 +151,8 @@ def compute_error_measures(
             round_res=True,
         )
     )
-    trips_over_time = report_true["trips_over_time_section"].data.merge(
-        report_estimate["trips_over_time_section"].data,
+    trips_over_time = report_true["trips_over_time"].data.merge(
+        report_estimate["trips_over_time"].data,
         how="outer",
         on="datetime",
         suffixes=("_true", "_estimate"),
@@ -163,14 +163,14 @@ def compute_error_measures(
         trips_over_time.trip_count_true, trips_over_time.trip_count_estimate
     )
     error_measures["trips_over_time_quartiles"] = symmetric_mape(
-        report_true["trips_over_time_section"].quartiles.apply(lambda x: x.toordinal()),
-        report_estimate["trips_over_time_section"].quartiles.apply(
+        report_true["trips_over_time"].quartiles.apply(lambda x: x.toordinal()),
+        report_estimate["trips_over_time"].quartiles.apply(
             lambda x: x.toordinal()
         ),
     )
 
     trips_per_weekday = pd.concat(
-        [report_true["trips_per_weekday"], report_estimate["trips_per_weekday"]],
+        [report_true["trips_per_weekday"].data, report_estimate["trips_per_weekday"].data],
         join="outer",
         axis=1,
     )
@@ -179,8 +179,8 @@ def compute_error_measures(
         trips_per_weekday.iloc[:, 0], trips_per_weekday.iloc[:, 1]
     )
 
-    trips_per_hour = report_true["trips_per_hour"].merge(
-        report_estimate["trips_per_hour"],
+    trips_per_hour = report_true["trips_per_hour"].data.merge(
+        report_estimate["trips_per_hour"].data,
         how="outer",
         on=["hour", "time_category"],
         suffixes=("_true", "_estimate"),
@@ -191,8 +191,8 @@ def compute_error_measures(
     )
 
     ### place
-    counts_per_tile = report_true["counts_per_tile_section"].data.merge(
-        report_estimate["counts_per_tile_section"].data,
+    counts_per_tile = report_true["visits_per_tile"].data.merge(
+        report_estimate["visits_per_tile"].data,
         how="outer",
         on="tile_id",
         suffixes=("_true", "_estimate"),
@@ -200,14 +200,14 @@ def compute_error_measures(
     counts_per_tile.fillna(0, inplace=True)
 
     rel_counts_true = (
-        counts_per_tile.visit_count_true / counts_per_tile.visit_count_true.sum()
+        counts_per_tile.visits_true / counts_per_tile.visits_true.sum()
     )
     rel_counts_estimate = (
-        counts_per_tile.visit_count_estimate
-        / counts_per_tile.visit_count_estimate.sum()
+        counts_per_tile.visits_estimate
+        / counts_per_tile.visits_estimate.sum()
     )
     error_measures["counts_per_tile_smape"] = symmetric_mape(
-        counts_per_tile.visit_count_true, counts_per_tile.visit_count_estimate
+        counts_per_tile.visits_true, counts_per_tile.visits_estimate
     )
     error_measures["rel_counts_per_tile_smape"] = symmetric_mape(
         rel_counts_true, rel_counts_estimate
@@ -223,33 +223,33 @@ def compute_error_measures(
         # create custom cost matrix with distances between all tiles
         cost_matrix = _get_cost_matrix(tile_coords)
     error_measures["counts_per_tile_emd"] = earth_movers_distance(
-        counts_per_tile.visit_count_true.to_numpy(),
-        counts_per_tile.visit_count_estimate.to_numpy(),
+        counts_per_tile.visits_true.to_numpy(),
+        counts_per_tile.visits_estimate.to_numpy(),
         cost_matrix,
     )
     error_measures["counts_per_tile_outliers"] = rel_error(
-        report_true["counts_per_tile_section"].n_outliers,
-        report_estimate["counts_per_tile_section"].n_outliers,
+        report_true["visits_per_tile"].n_outliers,
+        report_estimate["visits_per_tile"].n_outliers,
     )
     error_measures["counts_per_tile_quartiles"] = symmetric_mape(
-        report_true["counts_per_tile_section"].quartiles,
-        report_estimate["counts_per_tile_section"].quartiles,
+        report_true["visits_per_tile"].quartiles,
+        report_estimate["visits_per_tile"].quartiles,
     )
 
     ## tile counts per timewindow
     counts_per_tile_timewindow_emd = []
 
-    for c in report_true["counts_per_tile_timewindow"].columns:
-        tw_true = report_true["counts_per_tile_timewindow"][c].loc[
-            report_true["counts_per_tile_section"].data.tile_id
+    for c in report_true["visits_per_tile_timewindow"].data.columns:
+        tw_true = report_true["visits_per_tile_timewindow"].data[c].loc[
+            report_true["visits_per_tile"].data.tile_id
         ]  # sort accordingly for cost_matrix
         tw_true = tw_true / tw_true.sum()
-        if c not in report_estimate["counts_per_tile_timewindow"].columns:
+        if c not in report_estimate["visits_per_tile_timewindow"].data.columns:
             tw_estimate = tw_true.copy()
             tw_estimate[:] = 0
         else:
-            tw_estimate = report_estimate["counts_per_tile_timewindow"][c].loc[
-                report_true["counts_per_tile_section"].data.tile_id
+            tw_estimate = report_estimate["visits_per_tile_timewindow"].data[c].loc[
+                report_true["visits_per_tile"].data.tile_id
             ]
             tw_estimate = tw_estimate / tw_estimate.sum()
         tw = pd.merge(
@@ -272,11 +272,11 @@ def compute_error_measures(
         counts_per_tile_timewindow_emd
     )
 
-    counts_timew_true = report_true["counts_per_tile_timewindow"][
-        report_true["counts_per_tile_timewindow"].index != "None"
+    counts_timew_true = report_true["visits_per_tile_timewindow"].data[
+        report_true["visits_per_tile_timewindow"].data.index != "None"
     ].unstack()
-    counts_timew_estimate = report_estimate["counts_per_tile_timewindow"][
-        report_estimate["counts_per_tile_timewindow"].index != "None"
+    counts_timew_estimate = report_estimate["visits_per_tile_timewindow"].data[
+        report_estimate["visits_per_tile_timewindow"].data.index != "None"
     ].unstack()
 
     indices = np.unique(
@@ -292,7 +292,7 @@ def compute_error_measures(
     rel_counts_timew_true = counts_timew_true / counts_timew_true.sum()
     rel_counts_timew_estimate = counts_timew_estimate / counts_timew_estimate.sum()
 
-    error_measures["counts_per_tile_timewindow"] = symmetric_mape(
+    error_measures["visits_per_tile_timewindow"] = symmetric_mape(
         counts_timew_true.to_numpy().flatten(),
         counts_timew_estimate.to_numpy().flatten(),
     )
@@ -305,21 +305,21 @@ def compute_error_measures(
     ### od
     all_od_combinations = pd.concat(
         [
-            report_true["od_flows"][["origin", "destination"]],
-            report_estimate["od_flows"][["origin", "destination"]],
+            report_true["od_flows"].data[["origin", "destination"]],
+            report_estimate["od_flows"].data[["origin", "destination"]],
         ]
     ).drop_duplicates()
     all_od_combinations["flow"] = 0
     n_true_positive_zeros = len(tessellation) ** 2 - len(all_od_combinations)
 
     true = (
-        pd.concat([report_true["od_flows"], all_od_combinations])
+        pd.concat([report_true["od_flows"].data, all_od_combinations])
         .drop_duplicates(["origin", "destination"], keep="first")
         .sort_values(["origin", "destination"])
         .flow
     )
     estimate = (
-        pd.concat([report_estimate["od_flows"], all_od_combinations])
+        pd.concat([report_estimate["od_flows"].data, all_od_combinations])
         .drop_duplicates(["origin", "destination"], keep="first")
         .sort_values(["origin", "destination"])
         .flow
@@ -339,102 +339,68 @@ def compute_error_measures(
         rel_true.to_numpy(), rel_estimate.to_numpy(), n_true_positive_zeros
     )
     error_measures["travel_time_emd"] = wasserstein_distance1D(
-        report_true["travel_time_section"].data,
-        report_estimate["travel_time_section"].data,
+        report_true["travel_time"].data,
+        report_estimate["travel_time"].data,
     )
-    error_measures["travel_time_outliers"] = rel_error(
-        report_true["travel_time_section"].n_outliers,
-        report_estimate["travel_time_section"].n_outliers,
-    )
+    
     error_measures["travel_time_quartiles"] = symmetric_mape(
-        report_true["travel_time_section"].quartiles,
-        report_estimate["travel_time_section"].quartiles,
+        report_true["travel_time"].quartiles,
+        report_estimate["travel_time"].quartiles,
     )
     error_measures["jump_length_emd"] = wasserstein_distance1D(
-        report_true["jump_length_section"].data,
-        report_estimate["jump_length_section"].data,
+        report_true["jump_length"].data,
+        report_estimate["jump_length"].data,
     )
-    error_measures["jump_length_outliers"] = rel_error(
-        report_true["jump_length_section"].n_outliers,
-        report_estimate["jump_length_section"].n_outliers,
-    )
+    
     error_measures["jump_length_quartiles"] = symmetric_mape(
-        report_true["jump_length_section"].quartiles,
-        report_estimate["jump_length_section"].quartiles,
+        report_true["jump_length"].quartiles,
+        report_estimate["jump_length"].quartiles,
     )
 
     ## user
-    if report_estimate["traj_per_user_section"] is None:
+    if report_estimate["trips_per_user"] is None:
         error_measures["traj_per_user_quartiles"] = None
-        error_measures["traj_per_user_outliers"] = rel_error(
-            report_true["traj_per_user_section"].n_outliers, 0
-        )
+        error_measures["traj_per_user_outliers"] = None
     else:
         error_measures["traj_per_user_quartiles"] = symmetric_mape(
-            report_true["traj_per_user_section"].quartiles,
-            report_estimate["traj_per_user_section"].quartiles,
+            report_true["trips_per_user"].quartiles,
+            report_estimate["trips_per_user"].quartiles,
         )
-        error_measures["traj_per_user_outliers"] = rel_error(
-            report_true["traj_per_user_section"].n_outliers,
-            report_estimate["traj_per_user_section"].n_outliers,
-        )
-    if report_estimate["user_time_delta_section"] is None:
+    if report_estimate["user_time_delta"] is None:
         error_measures["user_time_delta_quartiles"] = None
-        error_measures["user_time_delta_outliers"] = rel_error(
-            report_true["user_time_delta_section"].n_outliers, 0
-        )
+        error_measures["user_time_delta_outliers"] = None
     else:
         error_measures["user_time_delta_quartiles"] = symmetric_mape(
             (
-                report_true["user_time_delta_section"].quartiles.apply(
+                report_true["user_time_delta"].quartiles.apply(
                     lambda x: x.total_seconds() / 3600
                 )
             ),
-            report_estimate["user_time_delta_section"].quartiles.apply(
+            report_estimate["user_time_delta"].quartiles.apply(
                 lambda x: x.total_seconds() / 3600
             ),
         )
-        error_measures["user_time_delta_outliers"] = rel_error(
-            report_true["user_time_delta_section"].n_outliers,
-            report_estimate["user_time_delta_section"].n_outliers,
-        )
     error_measures["radius_gyration_emd"] = wasserstein_distance1D(
-        report_true["radius_gyration_section"].data,
-        report_estimate["radius_gyration_section"].data,
+        report_true["radius_of_gyration"].data,
+        report_estimate["radius_of_gyration"].data,
     )
     error_measures["radius_gyration_quartiles"] = symmetric_mape(
-        report_true["radius_gyration_section"].quartiles,
-        report_estimate["radius_gyration_section"].quartiles,
+        report_true["radius_of_gyration"].quartiles,
+        report_estimate["radius_of_gyration"].quartiles,
     )
-    error_measures["radius_gyration_outliers"] = rel_error(
-        report_true["radius_gyration_section"].n_outliers,
-        report_estimate["radius_gyration_section"].n_outliers,
-    )
-    loc_entropy_per_tile = pd.DataFrame(report_true["location_entropy_section"]).merge(
-        report_estimate["location_entropy_section"],
-        how="outer",
-        on="tile_id",
-        suffixes=("_true", "_estimate"),
-    )
-    loc_entropy_per_tile.fillna(0, inplace=True)
     error_measures["location_entropy_mre"] = symmetric_mape(
-        loc_entropy_per_tile.location_entropy_true,
-        loc_entropy_per_tile.location_entropy_estimate,
+        #loc_entropy_per_tile.location_entropy_true,
+        #loc_entropy_per_tile.location_entropy_estimate,
+        report_true["mobility_entropy"].data[0],
+        report_estimate["mobility_entropy"].data[0],
     )
-    error_measures["user_tile_count_emd"] = wasserstein_distance1D(
-        report_true["user_tile_count_section"].data,
-        report_estimate["user_tile_count_section"].data,
-    )
+    # weight and value array not the same size...?
+    #error_measures["user_tile_count_emd"] = wasserstein_distance1D(
+    #    report_true["user_tile_count"].data,
+    #    report_estimate["user_tile_count"].data,
+    #)
     error_measures["user_tile_count_quartiles"] = symmetric_mape(
-        report_true["user_tile_count_section"].quartiles,
-        report_estimate["user_tile_count_section"].quartiles,
-    )
-    error_measures["uncorrelated_entropy_emd"] = wasserstein_distance1D(
-        report_true["uncorrelated_entropy_section"].data,
-        report_estimate["uncorrelated_entropy_section"].data,
-    )
-    error_measures["uncorrelated_entropy_quartiles"] = symmetric_mape(
-        report_true["uncorrelated_entropy_section"].quartiles,
-        report_estimate["uncorrelated_entropy_section"].quartiles,
+        report_true["user_tile_count"].quartiles,
+        report_estimate["user_tile_count"].quartiles,
     )
     return error_measures

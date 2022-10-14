@@ -58,7 +58,7 @@ for dataset_name in config.DATASET_NAMES:
             tessellation.set_index("tile_id").to_crs(3395).centroid.to_crs(4326)
         )
         sorted_tile_centroids = tile_centroids.loc[
-            report_true["counts_per_tile_section"].data.tile_id
+            report_true["visits_per_tile"].data.tile_id
         ]
         tile_coords = list(zip(sorted_tile_centroids.y, sorted_tile_centroids.x))
         cost_matrix = em._get_cost_matrix(tile_coords)
