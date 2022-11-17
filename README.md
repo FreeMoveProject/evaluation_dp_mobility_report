@@ -1,14 +1,12 @@
 # Evaluation of DP Mobility Report
 
-This ist the code to run the evaluation as stated in the publication xx.
+This ist the code to run the evaluation as stated in the publication xx. Use branch [V001](https://github.com/FreeMoveProject/evaluation_dp_mobility_report/tree/V001) to reproduce the results of the publication with Version 0.0.1 of the [`dp_mobility_report`](https://github.com/FreeMoveProject/dp_mobility_report) package.
+
+The main branch is updated to work with V.0.0.4 of the `dp_mobility_report` package.
 
 Output for all error measures can be found [here as tables](results/tables) and [here as graphs](results/graphs/graphs_all_error_measures.pdf).
 
 ## Reproduce results
-
-The evaluation uses Version 0.0.1 of the [`dp_mobility_report`](https://github.com/FreeMoveProject/dp_mobility_report) package.
-
-To reproduce the results, follow these instructions.
 
 Create a conda environment and install all necessary packages by running the following commands:
 
