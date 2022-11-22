@@ -1,6 +1,7 @@
 # Evaluation of DP Mobility Report
 
-This ist the code to run the evaluation as stated in the publication xx.
+This ist the code to run the evaluation as stated in this publication:
+Alexandra Kapp, Saskia Nuñez von Voigt, Helena Mihaljević & Florian Tschorsch (2022) Towards mobility reports with user-level privacy, Journal of Location Based Services, DOI: 10.1080/17489725.2022.2148008 
 
 Output for all error measures can be found [here as tables](results/tables) and [here as graphs](results/graphs/graphs_all_error_measures.pdf).
 
