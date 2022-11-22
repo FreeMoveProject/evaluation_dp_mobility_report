@@ -1,6 +1,9 @@
 # Evaluation of DP Mobility Report
 
-This ist the code to run the evaluation as stated in the publication xx. Use branch [V001](https://github.com/FreeMoveProject/evaluation_dp_mobility_report/tree/V001) to reproduce the results of the publication with Version 0.0.1 of the [`dp_mobility_report`](https://github.com/FreeMoveProject/dp_mobility_report) package.
+This ist the code to run the evaluation as stated in this publication:
+Alexandra Kapp, Saskia Nuñez von Voigt, Helena Mihaljević & Florian Tschorsch (2022) Towards mobility reports with user-level privacy, Journal of Location Based Services, DOI: 10.1080/17489725.2022.2148008 
+ 
+Use branch [V001](https://github.com/FreeMoveProject/evaluation_dp_mobility_report/tree/V001) to reproduce the results of the publication with Version 0.0.1 of the [`dp_mobility_report`](https://github.com/FreeMoveProject/dp_mobility_report) package.
 
 The main branch is updated to work with V.0.0.4 of the `dp_mobility_report` package.
 
